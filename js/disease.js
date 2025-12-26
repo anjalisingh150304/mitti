@@ -97,39 +97,72 @@ function switchCamera() {
 
 /* ===================== DUMMY AI ENGINE ===================== */
 
+/* ===================== DUMMY AI ENGINE ===================== */
+
+// 1. Expanded Data: Added Pesticide & Dosage info
 const dummyDiseases = [
-    { name: "Healthy Leaf", severity: "None" },
-    { name: "Powdery Mildew", severity: "Medium" },
-    { name: "Leaf Rust", severity: "High" },
-    { name: "Early Blight", severity: "Medium" },
-    { name: "Leaf Spot", severity: "Low" }
+    { 
+        name: "Healthy Leaf", 
+        severity: "None", 
+        pesticide: "No action needed.", 
+        dosage: "Keep maintaining water levels." 
+    },
+    { 
+        name: "Powdery Mildew", 
+        severity: "Medium", 
+        pesticide: "Sulfur Fungicide", 
+        dosage: "Mix 3g per liter of water. Spray weekly." 
+    },
+    { 
+        name: "Leaf Rust", 
+        severity: "High", 
+        pesticide: "Triazole Fungicides", 
+        dosage: "Apply immediately. Repeat every 10 days." 
+    },
+    { 
+        name: "Early Blight", 
+        severity: "Medium", 
+        pesticide: "Copper-based Fungicide", 
+        dosage: "Spray every 7-10 days during humid weather." 
+    },
+    { 
+        name: "Leaf Spot", 
+        severity: "Low", 
+        pesticide: "Neem Oil", 
+        dosage: "Dilute 5ml in 1L water. Spray in the evening." 
+    }
 ];
 
 let frameCounter = 0;
 
+// 2. The Disease Detection Engine
 function runDummyDiseaseAnalysis() {
     frameCounter++;
 
-    // First few frames show scanning
+    // Phase 1: Scanning
     if (frameCounter < 3) {
-        return {
-            status: "Scanning leaf surface..."
-        };
+        return { type: "scanning", msg: "Scanning leaf surface..." };
     }
 
+    // Phase 2: Processing
     if (frameCounter < 6) {
-        return {
-            status: "Extracting visual features..."
-        };
+        return { type: "processing", msg: "Extracting visual features..." };
     }
 
-    // After stabilization, show disease result
-    const disease =
-        dummyDiseases[Math.floor(Math.random() * dummyDiseases.length)];
+    // Phase 3: Result (Pick a random disease)
+    const disease = dummyDiseases[Math.floor(Math.random() * dummyDiseases.length)];
+    return { type: "result", data: disease };
+}
 
-    return {
-        status: `${disease.name} (Severity: ${disease.severity})`
-    };
+// 3. The New Pesticide Engine (Takes the disease data and formats a plan)
+function runPesticideEngine(diseaseData) {
+    if (diseaseData.name === "Healthy Leaf") {
+        return ` Status: Healthy\n Advice: ${diseaseData.dosage}`;
+    }
+
+    return ` Detected: ${diseaseData.name} (Severity: ${diseaseData.severity})
+ Recommend: ${diseaseData.pesticide}
+ Dosage: ${diseaseData.dosage}`;
 }
 
 /* ===================== FRAME CAPTURE + ANALYSIS ===================== */
@@ -145,10 +178,29 @@ function startSendingFrames() {
         ctx.drawImage(video, 0, 0);
 
         // Simulate AI inference
-        const result = runDummyDiseaseAnalysis();
+        const detectionResult = runDummyDiseaseAnalysis();
 
         resultBox.classList.remove("hidden");
-        resultText.textContent = result.status;
+
+        if (detectionResult.type === "result") {
+            // 2. Run Pesticide Engine only if we have a result
+            const finalOutput = runPesticideEngine(detectionResult.data);
+            
+            // Use innerText to preserve line breaks (\n)
+            resultText.innerText = finalOutput; 
+            
+            // Optional: Change color based on health
+            if (detectionResult.data.name === "Healthy Leaf") {
+                resultBox.style.borderLeft = "5px solid #4CAF50"; // Green
+            } else {
+                resultBox.style.borderLeft = "5px solid #FF5252"; // Red
+            }
+
+        } else {
+            // Still scanning or processing
+            resultText.innerText = detectionResult.msg;
+            resultBox.style.borderLeft = "5px solid #d2721eff"; 
+        }
 
     }, 1500);
 }
