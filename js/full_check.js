@@ -9,6 +9,7 @@ const canvas = document.getElementById("canvas");
 const diseaseStatus = document.getElementById("diseaseStatus");
 const cameraStatus = document.getElementById("cameraStatus");
 
+
 /* ================== DUMMY DATA ================== */
 
 const dummyCropRecommendations = [
@@ -19,35 +20,39 @@ const dummyCropRecommendations = [
 ];
 
 const dummyFertilizerAdvice = {
-    rice: [
-        "Apply nitrogen-rich fertilizer during early growth stage",
-        "Maintain standing water during vegetative phase",
-        "Apply zinc if chlorosis appears"
-    ],
-    maize: [
-        "Apply NPK in split doses",
-        "Side-dress nitrogen after 30 days",
-        "Ensure well-drained soil conditions"
-    ],
-    wheat: [
-        "Nitrogen application at tillering stage",
-        "Maintain moderate irrigation schedule",
-        "Potassium application improves lodging resistance"
-    ],
-    cotton: [
-        "Avoid excess nitrogen during flowering",
-        "Apply phosphorus for root development",
-        "Monitor magnesium deficiency"
-    ]
+    rice: [ "Apply nitrogen-rich fertilizer", "Maintain standing water", "Apply zinc if chlorosis appears" ],
+    maize: [ "Apply NPK in split doses", "Side-dress nitrogen", "Ensure well-drained soil" ],
+    wheat: [ "Nitrogen at tillering stage", "Maintain moderate irrigation", "Potassium for lodging resistance" ],
+    cotton: [ "Avoid excess nitrogen", "Apply phosphorus for roots", "Monitor magnesium deficiency" ]
 };
 
+// ADDED: Pesticide & Dosage Data
 const dummyDiseases = [
-    { label: "Healthy Leaf", confidence: 0.92 },
-    { label: "Powdery Mildew", confidence: 0.67 },
-    { label: "Leaf Rust", confidence: 0.74 },
-    { label: "Early Blight", confidence: 0.61 }
+    { 
+        label: "Healthy Leaf", 
+        confidence: 0.92, 
+        pesticide: "No action needed.", 
+        dosage: "Maintain regular care." 
+    },
+    { 
+        label: "Powdery Mildew", 
+        confidence: 0.67, 
+        pesticide: "Sulfur Fungicide", 
+        dosage: "Mix 3g per liter. Spray weekly." 
+    },
+    { 
+        label: "Leaf Rust", 
+        confidence: 0.74, 
+        pesticide: "Triazole Fungicides", 
+        dosage: "Apply immediately. Repeat in 10 days." 
+    },
+    { 
+        label: "Early Blight", 
+        confidence: 0.61, 
+        pesticide: "Copper-based Fungicide", 
+        dosage: "Spray every 7-10 days." 
+    }
 ];
-
 /* ================== FULL CHECK FLOW ================== */
 
 function startFullCheck() {
@@ -101,6 +106,13 @@ async function loadVideoDevices() {
 
     if (backIndex !== -1) currentCameraIndex = backIndex;
 
+    // Show switch button ONLY if we have multiple cameras
+    if (videoDevices.length > 1) {
+        const switchBtn = document.getElementById("switchCamBtn");
+        if(switchBtn) switchBtn.style.display = "inline-flex";
+    }
+
+
     if (videoDevices.length > 1) {
         document.getElementById("switchCamBtn").style.display = "inline-flex";
     }
@@ -149,31 +161,35 @@ function stopCamera() {
     clearInterval(captureInterval);
 }
 
-/* ================== DUMMY DISEASE ANALYSIS ================== */
+
+/* ================== DUMMY DISEASE + PESTICIDE ANALYSIS ================== */
 
 let frameCounter = 0;
+// We store the final decision so it doesn't flicker
+let finalDiseaseDecision = null;
 
 function simulateDiseaseDetection() {
     frameCounter++;
 
     if (frameCounter < 3) {
-        return { status: "Scanning leaf surface…" };
+        return { status: "Scanning leaf surface…", data: null };
     }
 
     if (frameCounter < 6) {
-        return { status: "Extracting visual features…" };
+        return { status: "Extracting visual features…", data: null };
     }
 
-    const disease =
-        dummyDiseases[Math.floor(Math.random() * dummyDiseases.length)];
+    // Pick a disease once and stick to it (prevents flickering)
+    if (!finalDiseaseDecision) {
+        finalDiseaseDecision = dummyDiseases[Math.floor(Math.random() * dummyDiseases.length)];
+    }
 
     return {
         status: "Diagnosis complete",
-        label: disease.label,
-        confidence: disease.confidence
+        data: finalDiseaseDecision,
+        confidence: finalDiseaseDecision.confidence
     };
 }
-
 /* ================== FRAME CAPTURE ================== */
 
 function startSendingFrames() {
@@ -188,10 +204,27 @@ function startSendingFrames() {
 
         const result = simulateDiseaseDetection();
 
-        diseaseStatus.textContent =
-            `${result.status} ${result.label ? "|| " + result.label : ""} ${
-                result.confidence ? "|| " + Math.round(result.confidence * 100) + "%" : ""
-            }`;
+        if (result.data) {
+            // SHOW PESTICIDE INFO
+            const d = result.data;
+            diseaseStatus.innerHTML = `
+                <strong>${d.label}</strong> (${Math.round(d.confidence * 100)}%)<br>
+                <span style="font-size: 0.9em; color: #ffeb3b;">
+                    💊 Recommend: ${d.pesticide} <br> 
+                    💧 Dosage: ${d.dosage}
+                </span>
+            `;
+            // Optional: Add border color based on health
+            if (d.label === "Healthy Leaf") {
+                diseaseStatus.style.borderLeft = "4px solid #4CAF50";
+            } else {
+                diseaseStatus.style.borderLeft = "4px solid #FF5252";
+            }
+        } else {
+            // SHOW SCANNING STATUS
+            diseaseStatus.textContent = result.status;
+            diseaseStatus.style.borderLeft = "4px solid #2196F3";
+        }
 
     }, 1500);
 }
