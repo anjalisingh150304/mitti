@@ -120,9 +120,26 @@ async function loadVideoDevices() {
 
 async function startCamera() {
     try {
+        // 1. Ensure devices are loaded first
         if (videoDevices.length === 0) {
             await loadVideoDevices();
         }
+
+        // ---------------------------------------------------------
+        // UI UPDATE: Show "Switch" button ONLY if multiple cameras exist
+        // ---------------------------------------------------------
+        const switchBtn = document.getElementById("switchCamBtn");
+        
+        if (switchBtn) {
+            if (videoDevices.length > 1) {
+                // Show button (use 'inline-flex' to keep icon aligned)
+                switchBtn.style.display = "inline-flex"; 
+            } else {
+                // Hide button completely if only 1 camera
+                switchBtn.style.display = "none";        
+            }
+        }
+        // ---------------------------------------------------------
 
         const deviceId = videoDevices[currentCameraIndex]?.deviceId;
 
