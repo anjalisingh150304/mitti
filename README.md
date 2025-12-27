@@ -1,4 +1,4 @@
-# 🚜 MITTIE: The Offline Smart Farming Assistant
+# MITTIE: The Offline Smart Farming Assistant
 > *Event:* Square Hacks 2025 (IIT Delhi)
 > *Team:* KrishiDhan
 
